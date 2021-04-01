@@ -91,6 +91,10 @@ Supported options:
 
     Make more noise (increase logging verbosity).
 
+  -T, --timestamp-pattern=PATTERN
+
+    TIMESTAMP_PATTERN
+
   -h, --help
 
     Show this message and exit.
@@ -125,6 +129,7 @@ def main():
     exclude_list = []
     include_list = []
     rotation_scheme = {}
+    timestamp_pat = None
     # Parse the command line arguments.
     try:
         options, arguments = getopt.getopt(sys.argv[1:], 'U:P:H:d:w:m:y:I:x:c:nvh', [
@@ -158,6 +163,8 @@ def main():
                 dry_run = True
             elif option in ('-v', '--verbose'):
                 coloredlogs.increase_verbosity()
+            elif option in ('-T', '--timestamp-pattern'):
+                timestamp_pat = value
             elif option in ('-h', '--help'):
                 usage(__doc__)
                 return
@@ -186,6 +193,7 @@ def main():
             include_list=include_list,
             exclude_list=exclude_list,
             dry_run=dry_run,
+            timestamp_pat=timestamp_pat
         ).rotate_backups(bucket)
 
 if __name__ == "__main__":

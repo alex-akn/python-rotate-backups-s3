@@ -72,7 +72,7 @@ class S3RotateBackups(RotateBackups):
 
     def __init__(self, rotation_scheme, aws_access_key_id, aws_secret_access_key,
                  include_list=None, exclude_list=None, dry_run=False,
-                 config_file=None):
+                 config_file=None, timestamp_pat=None):
         """
         Construct a :class:`S3RotateBackups` object.
 
@@ -112,6 +112,11 @@ class S3RotateBackups(RotateBackups):
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
         self.conn = boto.connect_s3(aws_access_key_id, aws_secret_access_key)
+        if timestamp_pat is not None:
+            _timestamp_pat = timestamp_pat
+        else:
+            _timestamp_pat = r'_(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})-'
+        self.timestamp_pat = re.compile(_timestamp_pat, re.VERBOSE)
 
         super(S3RotateBackups, self).__init__(rotation_scheme,
             include_list=include_list, exclude_list=exclude_list,
@@ -171,8 +176,8 @@ class S3RotateBackups(RotateBackups):
         logger.info("Scanning bucket for backups: %s", bucketname)
         
         for entry in natsort([key.name for key in bucket.list()]):
-            # Check for a time stamp in the directory entry's name.
-            match = TIMESTAMP_PATTERN.search(entry)
+            # Check for a time stamp in the directory entry's name.             
+            match = self.timestamp_pat.search(entry)
             if match:
                 # Make sure the entry matches the given include/exclude patterns.
                 if self.exclude_list and any(fnmatch.fnmatch(entry, p) for p in self.exclude_list):
